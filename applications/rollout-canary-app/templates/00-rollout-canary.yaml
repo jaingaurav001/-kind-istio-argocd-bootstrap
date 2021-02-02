@@ -6,8 +6,7 @@ kind: Rollout
 metadata:
   name: rollout-canary
 spec:
-  replicas: 2
-  revisionHistoryLimit: 2
+  replicas: 5
   selector:
     matchLabels:
       app: rollout-canary
@@ -25,11 +24,14 @@ spec:
   strategy:
     canary:
       steps:
-        - setWeight: 5
+        - setWeight: 20
         - pause: {}
-        - setWeight: 50
+        - setWeight: 40
         - pause:
-            duration: 10
+            duration: 1
+        - setWeight: 60
+        - pause:
+            duration: 1
       canaryService: rollout-canary # required
       stableService: rollout-canary-stable  # required
       trafficRouting:

@@ -39,8 +39,37 @@ In order to create the cluster run:
 
 ## Bootstrap the cluster
 
-`kubectl apply -k argocd-bootstrap`
+`kubectl apply -k argocd-bootstrap/argocd-istio-bootstrap/`
 
+NOTE: If you get an error like: error: unable to recognize "argocd-bootstrap/argocd-istio-bootstrap": no matches for kind "Application" in version "argoproj.io/v1alpha1” just run the command again, this happens because you’ve just installed the CRD Application and trying to install an instance of it.
+
+## Access the ArgoCD
+ 
 If you then want to access ArgoCD via a load balancer you have to then issue:
 
-`kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'`
+The configuration profile will set the ingress type to LoadBalancer, which is not working on a local cluster.
+
+For the ingress gateway to accept incoming connections we have to change the type from LoadBalancer to NodePort and change the assigned port to 32000 (the port we forwarded during the cluster creation).
+
+Apply the patch which does the above:
+`kubectl patch service istio-ingressgateway -n istio-system --patch "$(cat resources/patch-ingressgateway-nodeport.yaml)"`
+
+Edit the /etc/hosts file so to have something like:
+`##
+# Host Database
+#
+# localhost is used to configure the loopback interface
+# when the system is booting.  Do not change this entry.
+##
+
+[...]
+127.0.0.1 argocd.kube
+[...]`
+
+Then try to access in your browser http://argocd.kube. It should open the login page of ArgoCD.
+
+## Get the password of your running Argo CD:
+`kubectl get pods \
+  -n argocd \
+  -l app.kubernetes.io/name=argocd-server \
+  -o "jsonpath={.items[0].metadata.name}"`
